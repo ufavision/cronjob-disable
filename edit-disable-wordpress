@@ -92,37 +92,35 @@ echo ""
 
 # ====================================
 # ดึงรายชื่อ cPanel accounts จริงๆ
-# รองรับ 3 วิธี ตามความพร้อมของระบบ
+# scan directory ตรงเสมอ + merge กับ cPanel list
+# รองรับ accounts ที่ migrate มา ซึ่งไม่อยู่ใน /var/cpanel/users/
 # ====================================
 get_cpanel_accounts() {
     local base_dir="$1"
-    local accounts=()
+    declare -A _found=()
 
-    # วิธีที่ 1: /var/cpanel/users/ (แม่นที่สุด)
+    # สแกน directory ตรงเสมอ — source of truth จริงๆ
+    # รองรับ migrated accounts ที่ไม่ได้ register ใน /var/cpanel/users/
+    for d in "${base_dir}"/*/; do
+        [[ ! -d "$d" ]] && continue
+        local user
+        user=$(basename "$d")
+        echo "$user" | grep -qE "^(${SKIP_DIRS})$" && continue
+        _found["$user"]=1
+    done
+
+    # เพิ่ม accounts จาก cPanel data (กรณีที่ home dir อยู่ที่อื่น)
     if [ -d "/var/cpanel/users" ]; then
         while IFS= read -r user; do
-            [ -d "${base_dir}/${user}" ] && accounts+=("$user")
+            [ -d "${base_dir}/${user}" ] && _found["$user"]=1
         done < <(ls /var/cpanel/users/ 2>/dev/null | grep -vE "^(root|nobody)$")
-
-    # วิธีที่ 2: /etc/trueuserdomains
     elif [ -f "/etc/trueuserdomains" ]; then
         while IFS= read -r user; do
-            [ -d "${base_dir}/${user}" ] && accounts+=("$user")
+            [ -d "${base_dir}/${user}" ] && _found["$user"]=1
         done < <(awk '{print $NF}' /etc/trueuserdomains 2>/dev/null | sort -u | grep -vE "^(root|nobody)$")
-
-    # วิธีที่ 3: สแกน directory ตรงๆ กรอง SKIP_DIRS เท่านั้น
-    # ไม่ต้องเช็ค public_html เพราะ Structure 1 ไม่มี public_html ที่ระดับ user
-    else
-        for d in "${base_dir}"/*/; do
-            [[ ! -d "$d" ]] && continue
-            local user
-            user=$(basename "$d")
-            echo "$user" | grep -qE "^(${SKIP_DIRS})$" && continue
-            accounts+=("$user")
-        done
     fi
 
-    echo "${accounts[@]}"
+    echo "${!_found[@]}"
 }
 
 # ==================== PRE-SCAN: นับ cPanel Accounts ====================
