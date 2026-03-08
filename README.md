@@ -10,7 +10,7 @@
 ### 1. scan & แก้ไข user เดียว
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/AnonymousVS/cronjob-disable/main/edit-disable-wordpress) host1
+bash <(curl -s https://raw.githubusercontent.com/AnonymousVS/cronjob-disable/main/edit-disable-wordpress) cpanel1
 ```
 
 ---
@@ -18,7 +18,7 @@ bash <(curl -s https://raw.githubusercontent.com/AnonymousVS/cronjob-disable/mai
 ### 2. scan & แก้ไข หลาย user พร้อมกัน
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/AnonymousVS/cronjob-disable/main/edit-disable-wordpress) host1 host2
+bash <(curl -s https://raw.githubusercontent.com/AnonymousVS/cronjob-disable/main/edit-disable-wordpress) cpanel1 cpanel2
 ```
 
 ---
